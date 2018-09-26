@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+set -e
+
+if [ $# -le 1 ]; then
+    echo 'icongena - script generation iOS icons.'
+    echo 'Usage: icongena IMAGE SIZE [PATH] [ALIAS]'
+    echo '       icongena source.jpg 44'
+    echo '       icongena source.jpg 44 /path/to/project'
+    echo '       icongena source.jpg clean'
+    echo
+    echo 'Hint of iOS sizes (of one side):'
+    echo '  30 - tab bar icon'
+    echo '  24 - navigation bar icon'
+    echo '  44 - navigation bar height'
+    exit 0
+fi
+
+source=$1
+filename=$(basename "$source")
+ext="${filename##*.}"
+filename="${filename%.*}"
+
+size1=$2
+PROJECT_PATH=$3
+ALIAS=$4
+
+if [ -z "$ALIAS" ]; then
+    ALIAS=${filename}
+fi
+
+if [ -n "$PROJECT_PATH" ]; then
+    if [ ! -d "$PROJECT_PATH" ]; then
+        echo "Path '$PROJECT_PATH' is not a folder. Should be folder."
+        exit 1
+    fi
+
+    ASSETS_FOLDER=$(find $PROJECT_PATH -name "Assets.xcassets")
+
+    if [ -z "$ASSETS_FOLDER" ]; then
+        echo "Assets.xcassets folder not found in specified path."
+        exit 1
+    fi
+
+    if [ $(echo "$ASSETS_FOLDER" | wc -l) -ne 1 ]; then
+        echo "Found several Assets.xcassets folders. Specify which one."
+        exit 1
+    fi
+
+    # echo $ASSETS_FOLDER
+    # exit 0
+fi
+
+if [ $size1 == "clean" ]; then
+	rm -rfv ${filename}@*
+	echo "Cleaned."
+	exit 0
+fi	
+
+size2=$(($size1*2))
+size3=$(($size1*3))
+f1=${ALIAS}@1x.${ext}
+f2=${ALIAS}@2x.${ext}
+f3=${ALIAS}@3x.${ext}
+
+convert ${source} -resize ${size1}x${size1} ${f1}
+echo "${f1}     # ${size1}x${size1}"
+
+convert ${source} -resize ${size2}x${size2} ${f2}
+echo "${f2}     # ${size2}x${size2}"
+
+convert ${source} -resize ${size3}x${size3} ${f3}
+echo "${f3}     # ${size3}x${size3}"
+
+if [ -n "$ASSETS_FOLDER" ]; then
+    IMAGESET_PATH="$ASSETS_FOLDER/${ALIAS}.imageset"
+    # If specified, need to import
+    echo "Move files to '$IMAGESET_PATH'"
+    if [ ! -d $IMAGESET_PATH ]; then 
+        mkdir $IMAGESET_PATH
+    fi
+
+    rm -f $IMAGESET_PATH/*
+
+    mv $f1 $IMAGESET_PATH
+    mv $f2 $IMAGESET_PATH
+    mv $f3 $IMAGESET_PATH
+
+    CONTENT=$(echo '{
+  "images" : [
+    {
+      "idiom" : "universal",
+      "filename" : "NAME@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "idiom" : "universal",
+      "filename" : "NAME@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "idiom" : "universal",
+      "filename" : "NAME@3x.png",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}' | sed -e "s/NAME/${ALIAS}/")
+
+    echo "$CONTENT" > "$IMAGESET_PATH/Contents.json"
+fi
