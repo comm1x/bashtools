@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+if [ $# -le 2 ]; then
+    echo 'convert-tint - script for tinting images, replace any color with given.'
+    echo 'Usage: convert-tint source.jpg "#FF0000" target.jpg'
+    exit 0
+fi
+
+source=$1
+color=$2
+target=$3
+
+convert ${source} -fill ${color} -colorize 100% ${target}
