@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+if [ "$#" -lt 2 ]; then
+    echo "repeaty - utility for repeating bash commands"
+    echo "Usage: "
+    echo "  repeaty N COMMAND     - will repeat COMMAND N times"
+    echo "  repeaty -c N COMMAND  - will repeat COMMAND N times concurrently"
+    exit 1
+fi
+
+NUM=$1
+CONCURRENT=0
+shift
+
+if [ "$NUM" == "-c" ]; then 
+    CONCURRENT=1
+    NUM=$1
+    shift
+fi
+
+if [ ! -z "${NUM##[0-9]*}" ]; then
+    echo "Invalid number: $NUM"
+    exit 1
+fi
+
+CMD=$@
+
+for i in $(seq $NUM); do
+    if [ $CONCURRENT -eq 1 ]; then
+        "$@" &
+    else
+        "$@"
+    fi
+done
