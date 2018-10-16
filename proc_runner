@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+
+if [ "$#" -eq 0 ]; then
+    echo "proc_runner - utility for running process in single instance"
+    echo "It save PID to proc.pid file, and at restart stops previous instance"
+    echo
+    echo "Usage: "
+    echo "  proc_runner COMMAND     - will start COMMAND and save pid into proc.pid in current directory"
+    echo "                            NOTE: do not add '&' at the end of command"
+    exit 1
+fi
+
+CMD=$@
+PID_FILE="./proc.pid"
+
+if [ -e $PID_FILE ]; then
+    PID=$(cat $PID_FILE)
+    if ps -p $PID > /dev/null; then
+        kill $PID
+    fi
+    rm $PID_FILE
+fi
+
+"$@" &
+echo $! > $PID_FILE
