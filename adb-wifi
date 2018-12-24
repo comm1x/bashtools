@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Device should be connected by wire at start
+adb kill-server
+adb start-server
+sleep 1
+adb tcpip 5555
+sleep 1
+IP=$(adb shell ip -4 addr show wlan0 | grep inet | tr -s " " | cut -d " " -f3 | cut -d "/" -f1)
+adb connect ${IP}:5555
+echo "Disconnect device from wire"
