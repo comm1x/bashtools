@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [ $# -le 0 ]; then
+    echo 'Usage: jqless JSON-STRING'
+    exit 0
+fi
+
+JSON="${@:1}"
+echo "${JSON}" | jq -C . | less
